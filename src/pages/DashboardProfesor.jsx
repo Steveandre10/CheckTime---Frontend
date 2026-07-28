@@ -261,6 +261,7 @@ export default function DashboardProfesor() {
   const [horarios, setHorarios] = useState([]);
   const [horariosHoy, setHorariosHoy] = useState([]);
   const [coberturasDocente, setCoberturasDocente] = useState([]);
+  const [horasNoAsistidas, setHorasNoAsistidas] = useState(0);
   const [notification, setNotification] = useState({ show: false, message: "", type: "error" });
 
   // Estados para reporte de novedades
@@ -320,6 +321,7 @@ export default function DashboardProfesor() {
       obtenerTiposPermiso();
       obtenerSuspensiones();
       obtenerCoberturas(id);
+      obtenerHorasNoAsistidas(id, parsed.fecha_creacion);
     } catch { navigate("/login"); }
   }, [navigate]);
 
@@ -407,6 +409,29 @@ export default function DashboardProfesor() {
       setCoberturasDocente(res.data || []);
     } catch (e) {
       console.error("Error al obtener coberturas de docente:", e);
+    }
+  };
+
+  const obtenerHorasNoAsistidas = async (id_usuario, fecha_creacion) => {
+    try {
+      const start = fecha_creacion ? fecha_creacion.split("T")[0] : new Date().toISOString().split("T")[0];
+      const end = new Date().toISOString().split("T")[0];
+      
+      const res = await axios.get("/asistencia/reporte", {
+        params: {
+          id_usuario,
+          fecha_inicio: start,
+          fecha_fin: end
+        }
+      });
+      
+      const noAsistidas = (res.data || [])
+        .filter(r => r.estado === "NO_PRESENTE")
+        .reduce((sum, r) => sum + (r.horas_perdidas || 0), 0);
+        
+      setHorasNoAsistidas(noAsistidas);
+    } catch (e) {
+      console.error("Error al obtener horas no asistidas:", e);
     }
   };
 
@@ -544,6 +569,7 @@ export default function DashboardProfesor() {
       setLoading(true);
       await axios.post("/asistencia/entrada", { id_usuario: id });
       await obtenerEstado(id);
+      await obtenerHorasNoAsistidas(id, usuario?.fecha_creacion);
       triggerNotification("Entrada registrada correctamente.", "success");
     } catch (e) {
       triggerNotification(e.response?.data?.message || "Error al registrar entrada.", "error");
@@ -646,6 +672,7 @@ export default function DashboardProfesor() {
       setLoading(true);
       await axios.post("/asistencia/salida", { id_usuario: id });
       await obtenerEstado(id);
+      await obtenerHorasNoAsistidas(id, usuario?.fecha_creacion);
       triggerNotification("Salida registrada correctamente.", "success");
     } catch (e) {
       triggerNotification(e.response?.data?.message || "Error al registrar salida.", "error");
@@ -837,7 +864,7 @@ export default function DashboardProfesor() {
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr", gap: 12 }}>
               <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 12, padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                 <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Horas no asistidas</p>
-                <p style={{ margin: "6px 0 0", fontSize: 24, fontWeight: 700, color: "#dc2626", fontFamily: "Hanken Grotesk, sans-serif" }}>4h</p>
+                <p style={{ margin: "6px 0 0", fontSize: 24, fontWeight: 700, color: "#dc2626", fontFamily: "Hanken Grotesk, sans-serif" }}>{horasNoAsistidas}h</p>
               </div>
               <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 12, padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                 <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Coberturas</p>
