@@ -861,11 +861,7 @@ export default function DashboardProfesor() {
 
 
             {/* Stats column */}
-            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr 1fr" : "1fr", gap: 12 }}>
-              <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 12, padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Horas no asistidas</p>
-                <p style={{ margin: "6px 0 0", fontSize: 24, fontWeight: 700, color: "#dc2626", fontFamily: "Hanken Grotesk, sans-serif" }}>{horasNoAsistidas}h</p>
-              </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 12 }}>
               <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 12, padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "center" }}>
                 <p style={{ margin: 0, fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Coberturas</p>
                 <p style={{ margin: "6px 0 0", fontSize: 24, fontWeight: 700, color: "var(--text-title)", fontFamily: "Hanken Grotesk, sans-serif" }}>{coberturasDocente.length}</p>
