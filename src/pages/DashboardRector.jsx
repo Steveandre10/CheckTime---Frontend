@@ -1042,6 +1042,21 @@ export default function DashboardRector() {
     });
   };
 
+  const isClaseConPermiso = (clase, permisosHoy) => {
+    if (!permisosHoy || permisosHoy.length === 0) return false;
+    return permisosHoy.some(perm => {
+      try {
+        const descObj = typeof perm.descripcion === 'string' ? JSON.parse(perm.descripcion) : perm.descripcion;
+        if (descObj && Array.isArray(descObj.clases_afectadas)) {
+          return descObj.clases_afectadas.some(ca => ca.id_horario === clase.id_horario);
+        }
+        return true;
+      } catch (e) {
+        return true;
+      }
+    });
+  };
+
   const renderMainContent = () => {
     const getMidnightDate = (dateVal) => {
       if (!dateVal) return new Date(0);
@@ -2017,11 +2032,14 @@ export default function DashboardRector() {
                         );
                         
                         const tieneNovedadAprobada = clase && !coberturaAsignada && isClaseConNovedadAprobada(clase, docente.novedadesHoy);
+                        const tienePermisoAprobado = clase && !coberturaAsignada && isClaseConPermiso(clase, docente.permisosHoy);
 
                         const cellBg = suspensionHoy
                           ? "#fce7f3"
                           : (coberturaAsignada
                             ? "#ffedd5"
+                            : tienePermisoAprobado
+                            ? "#dcfce7"
                             : tieneNovedadAprobada
                             ? "#dbeafe"
                             : isCoberturas
@@ -2034,6 +2052,8 @@ export default function DashboardRector() {
                           ? "1px solid #fbcfe8"
                           : (coberturaAsignada
                             ? "2px solid #f97316"
+                            : tienePermisoAprobado
+                            ? "2px solid #16a34a"
                             : tieneNovedadAprobada
                             ? "2px solid #1d4ed8"
                             : isCoberturas
@@ -2044,6 +2064,8 @@ export default function DashboardRector() {
                           ? "#9d174d"
                           : (coberturaAsignada
                             ? "#ea580c"
+                            : tienePermisoAprobado
+                            ? "#166534"
                             : tieneNovedadAprobada
                             ? "#1e40af"
                             : isCoberturas
@@ -2066,14 +2088,14 @@ export default function DashboardRector() {
                                   fontSize: 11,
                                   whiteSpace: "nowrap",
                                   display: "inline-block",
-                                  animation: (isCoberturas && !tieneNovedadAprobada && !suspensionHoy) ? "pulseRed 1.8s infinite ease-in-out" : "none",
-                                  boxShadow: (isCoberturas && !tieneNovedadAprobada && !suspensionHoy) ? "0 0 12px rgba(239, 68, 68, 0.45)" : "none"
+                                  animation: (isCoberturas && !tieneNovedadAprobada && !tienePermisoAprobado && !suspensionHoy) ? "pulseRed 1.8s infinite ease-in-out" : "none",
+                                  boxShadow: (isCoberturas && !tieneNovedadAprobada && !tienePermisoAprobado && !suspensionHoy) ? "0 0 12px rgba(239, 68, 68, 0.45)" : "none"
                                 }}
                                 title={coberturaAsignada ? `Cubierto por ${coberturaAsignada.docente_cobertura.nombre} ${coberturaAsignada.docente_cobertura.apellido}` : `${clase.nombre} (Bloque: ${clase.bloque})`}
                               >
                                 {clase.nombre}
                                 <div style={{ fontSize: 9, opacity: 0.8, fontWeight: 600 }}>{clase.bloque}</div>
-                                {isCoberturas && !suspensionHoy && (
+                                {isCoberturas && !suspensionHoy && !tieneNovedadAprobada && !tienePermisoAprobado && (
                                   <div 
                                      className="animate-blink-alert"
                                      style={{
@@ -2104,6 +2126,38 @@ export default function DashboardRector() {
                                     }}
                                   >
                                     CUBIERTO: {coberturaAsignada.docente_cobertura.nombre.substring(0, 1)}. {coberturaAsignada.docente_cobertura.apellido}
+                                  </div>
+                                )}
+                                {tieneNovedadAprobada && !suspensionHoy && !tienePermisoAprobado && (
+                                  <div
+                                    style={{
+                                      fontSize: 8,
+                                      background: "#1d4ed8",
+                                      color: "#fff",
+                                      padding: "2px 4px",
+                                      borderRadius: 3,
+                                      marginTop: 4,
+                                      fontWeight: 900,
+                                      letterSpacing: "0.05em"
+                                    }}
+                                  >
+                                    NOVEDAD
+                                  </div>
+                                )}
+                                {tienePermisoAprobado && !suspensionHoy && (
+                                  <div
+                                    style={{
+                                      fontSize: 8,
+                                      background: "#16a34a",
+                                      color: "#fff",
+                                      padding: "2px 4px",
+                                      borderRadius: 3,
+                                      marginTop: 4,
+                                      fontWeight: 900,
+                                      letterSpacing: "0.05em"
+                                    }}
+                                  >
+                                    PERMISO
                                   </div>
                                 )}
                               </div>

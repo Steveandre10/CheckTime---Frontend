@@ -85,6 +85,21 @@ const isClaseConNovedadAprobada = (clase, novedadesHoy) => {
   });
 };
 
+const isClaseConPermiso = (clase, permisosHoy) => {
+  if (!permisosHoy?.length) return false;
+  return permisosHoy.some((perm) => {
+    try {
+      const desc = typeof perm.descripcion === "string" ? JSON.parse(perm.descripcion) : perm.descripcion;
+      if (desc?.clases_afectadas?.length > 0) {
+        return desc.clases_afectadas.some((ca) => ca.id_horario === clase.id_horario);
+      }
+      return true;
+    } catch {
+      return true;
+    }
+  });
+};
+
 const categorizeDocente = (d) => {
   if (!d.clases.length) return "libre";
   const estaPresente = ["PRESENTE", "TARDANZA", "FINALIZADO", "SALIDA_TEMPRANA"].includes(d.estado);
@@ -453,18 +468,19 @@ export default function DashboardCoordinador() {
                         (docente.estado === "SALIDA_TEMPRANA" && clase.hora_fin > salStr)
                       );
                       const tieneNovedad = clase && !coberturaAsignada && isClaseConNovedadAprobada(clase, docente.novedadesHoy);
+                      const tienePermiso = clase && !coberturaAsignada && isClaseConPermiso(clase, docente.permisosHoy);
 
-                      const bg     = coberturaAsignada ? "#ffedd5" : tieneNovedad ? "#dbeafe" : isCob ? "#fee2e2" : isBreak ? "#fef3c7" : clase ? "#e0f2fe" : "transparent";
-                      const border = coberturaAsignada ? "2px solid #f97316" : tieneNovedad ? "2px solid #1d4ed8" : isCob ? "2px solid #ef4444" : `1px solid ${isBreak?"#fbbf24":clase?"#38bdf8":"#f1f5f9"}`;
-                      const color  = coberturaAsignada ? "#ea580c" : tieneNovedad ? "#1e40af" : isCob ? "#991b1b" : isBreak ? "#92400e" : "#0369a1";
-                      const isClickable = !coberturaAsignada && (isCob || tieneNovedad);
+                      const bg     = coberturaAsignada ? "#ffedd5" : tienePermiso ? "#dcfce7" : tieneNovedad ? "#dbeafe" : isCob ? "#fee2e2" : isBreak ? "#fef3c7" : clase ? "#e0f2fe" : "transparent";
+                      const border = coberturaAsignada ? "2px solid #f97316" : tienePermiso ? "2px solid #16a34a" : tieneNovedad ? "2px solid #1d4ed8" : isCob ? "2px solid #ef4444" : `1px solid ${isBreak?"#fbbf24":clase?"#38bdf8":"#f1f5f9"}`;
+                      const color  = coberturaAsignada ? "#ea580c" : tienePermiso ? "#166534" : tieneNovedad ? "#1e40af" : isCob ? "#991b1b" : isBreak ? "#92400e" : "#0369a1";
+                      const isClickable = !coberturaAsignada && (isCob || tieneNovedad || tienePermiso);
 
                       // Animación: pulseOrange si tiene cobertura asignada (titila en naranja), pulseRed si falta cobertura (titila en rojo)
-                      const animation = (isCob && !tieneNovedad)
+                      const animation = (isCob && !tieneNovedad && !tienePermiso)
                         ? "pulseRed 1.8s infinite ease-in-out"
                         : (coberturaAsignada ? "pulseOrange 1.8s infinite ease-in-out" : "none");
 
-                      const boxShadow = (isCob && !tieneNovedad)
+                      const boxShadow = (isCob && !tieneNovedad && !tienePermiso)
                         ? "0 0 14px rgba(239, 68, 68, 0.55)"
                         : (coberturaAsignada ? "0 0 14px rgba(249, 115, 22, 0.55)" : "none");
 
@@ -487,8 +503,9 @@ export default function DashboardCoordinador() {
                             >
                               {clase.nombre}
                               <div style={{ fontSize:9,opacity:0.8,fontWeight:600 }}>{clase.bloque}</div>
-                              {isCob && !tieneNovedad && <div style={{ fontSize:8,background:"#dc2626",color:"#fff",borderRadius:3,padding:"1px 4px",marginTop:2,fontWeight:700 }}>SIN COBERTURA</div>}
-                              {tieneNovedad && <div style={{ fontSize:8,background:"#1d4ed8",color:"#fff",borderRadius:3,padding:"1px 4px",marginTop:2,fontWeight:700 }}>NOVEDAD</div>}
+                              {isCob && !tieneNovedad && !tienePermiso && <div style={{ fontSize:8,background:"#dc2626",color:"#fff",borderRadius:3,padding:"1px 4px",marginTop:2,fontWeight:700 }}>SIN COBERTURA</div>}
+                              {tieneNovedad && !tienePermiso && <div style={{ fontSize:8,background:"#1d4ed8",color:"#fff",borderRadius:3,padding:"1px 4px",marginTop:2,fontWeight:700 }}>NOVEDAD</div>}
+                              {tienePermiso && <div style={{ fontSize:8,background:"#16a34a",color:"#fff",borderRadius:3,padding:"1px 4px",marginTop:2,fontWeight:700 }}>PERMISO</div>}
                               {coberturaAsignada && (
                                 <div style={{ fontSize:8,background:"#ea580c",color:"#fff",borderRadius:3,padding:"1px 4px",marginTop:2,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",gap:2 }}>
                                   <span>🟠 CUBIERTO:</span> {coberturaAsignada.docente_cobertura?.nombre?.substring(0, 1)}. {coberturaAsignada.docente_cobertura?.apellido}
