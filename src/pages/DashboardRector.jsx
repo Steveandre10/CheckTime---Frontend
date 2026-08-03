@@ -47,13 +47,21 @@ function HorarioCalendario({ value, onChange, defaultNombre = "", defaultBloque 
   const handleToggle = (dia, periodId) => {
     const current = blocks[dia] || {};
     const updated = { ...current };
-    if (current[periodId]) {
-      delete updated[periodId];
-    } else {
+    const cell = current[periodId];
+    if (!cell) {
       updated[periodId] = {
-        nombre: defaultNombre || "",
-        bloque: defaultBloque || ""
+        nombre: defaultNombre || "Clase",
+        bloque: defaultBloque || "",
+        es_pedagogica: false
       };
+    } else if (cell.nombre !== "HORA PEDAGOGICA" && !cell.es_pedagogica) {
+      updated[periodId] = {
+        nombre: "HORA PEDAGOGICA",
+        bloque: "Pedagógica",
+        es_pedagogica: true
+      };
+    } else {
+      delete updated[periodId];
     }
     onChange({ ...blocks, [dia]: updated });
   };
@@ -100,7 +108,9 @@ function HorarioCalendario({ value, onChange, defaultNombre = "", defaultBloque 
                 <div style={{ fontSize: 9, color: "#64748b", fontWeight: 500 }}>{period.inicio} – {period.fin}</div>
               </div>
               {DIAS.map((dia) => {
-                const isSelected = !!(blocks[dia] && blocks[dia][period.id]);
+                const cellVal = blocks[dia]?.[period.id];
+                const isSelected = !!cellVal;
+                const isPed = cellVal?.nombre === "HORA PEDAGOGICA" || cellVal?.es_pedagogica;
                 return (
                   <div
                     key={`${dia}-${period.id}`}
@@ -108,13 +118,17 @@ function HorarioCalendario({ value, onChange, defaultNombre = "", defaultBloque 
                     style={{
                       height: 34,
                       borderRadius: 6,
-                      background: isSelected
+                      background: isPed
+                        ? "#f3e8ff"
+                        : isSelected
                         ? "#3b82f6"
                         : isBreak
                         ? "var(--card-subbg)"
                         : "var(--card-bg)",
                       cursor: "pointer",
-                      border: isSelected
+                      border: isPed
+                        ? "2.5px solid #9333ea"
+                        : isSelected
                         ? "2.5px solid #1d4ed8"
                         : isBreak
                         ? "1px dashed var(--card-border)"
@@ -123,22 +137,26 @@ function HorarioCalendario({ value, onChange, defaultNombre = "", defaultBloque 
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      color: isSelected ? "#fff" : isBreak ? "var(--text-muted)" : "var(--text-muted)",
+                      color: isPed
+                        ? "#6b21a8"
+                        : isSelected
+                        ? "#fff"
+                        : "var(--text-muted)",
                       fontSize: 11,
                       fontWeight: 800,
                     }}
                     onMouseEnter={(e) => {
-                      if (!isSelected) {
+                      if (!isSelected && !isPed) {
                         e.currentTarget.style.background = isBreak ? "var(--card-border)" : "var(--bg-main)";
                       }
                     }}
                     onMouseLeave={(e) => {
-                      if (!isSelected) {
+                      if (!isSelected && !isPed) {
                         e.currentTarget.style.background = isBreak ? "var(--card-subbg)" : "var(--card-bg)";
                       }
                     }}
                   >
-                    {isSelected ? "✓" : isBreak ? period.id : ""}
+                    {isPed ? "Pedag." : isSelected ? "✓" : isBreak ? period.id : ""}
                   </div>
                 );
               })}
@@ -225,16 +243,19 @@ function ModalAgregarHorario({ onClose, profesores, onSave }) {
       Object.entries(periodObj || {}).map(([pId, details]) => {
         const period = PERIODS.find((p) => p.id === pId);
         return {
-          nombre: details.nombre || form.nombre,
+          nombre: details.nombre || form.nombre || "Clase",
           dia_semana: dia.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase(),
           hora_inicio: period.inicio,
           hora_fin: period.fin,
-          bloque: details.bloque || form.bloque,
+          bloque: details.bloque || form.bloque || "Salón",
           id_usuario: parseInt(form.id_usuario),
         };
       })
     );
-    if (!entradasValidas.length || !form.id_usuario || !form.nombre || !form.bloque) return;
+    if (!entradasValidas.length || !form.id_usuario) {
+      alert("Por favor selecciona un docente y marca al menos una hora en el calendario.");
+      return;
+    }
     try {
       setSaving(true);
       for (const entrada of entradasValidas) {
@@ -392,11 +413,11 @@ function ModalEditarHorarioDocente({ onClose, docente, onSave }) {
       Object.entries(periodObj || {}).map(([pId, details]) => {
         const period = PERIODS.find((p) => p.id === pId);
         return {
-          nombre: details.nombre || form.nombre,
+          nombre: details.nombre || form.nombre || "Clase",
           dia_semana: dia.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase(),
           hora_inicio: period.inicio,
           hora_fin: period.fin,
-          bloque: details.bloque || form.bloque,
+          bloque: details.bloque || form.bloque || "Salón",
         };
       })
     );
@@ -2026,13 +2047,14 @@ export default function DashboardRector() {
                           return cobDateStr === getLocalTodayStr() && c.id_horario === clase.id_horario;
                         });
 
-                        const isCoberturas = clase && !coberturaAsignada && (
+                        const isCoberturas = clase && clase.nombre !== "HORA PEDAGOGICA" && !coberturaAsignada && (
                           docente.estado === "NO_PRESENTE" ||
                           (docente.estado === "SALIDA_TEMPRANA" && clase.hora_fin > horaSalidaStr)
                         );
                         
                         const tieneNovedadAprobada = clase && !coberturaAsignada && isClaseConNovedadAprobada(clase, docente.novedadesHoy);
                         const tienePermisoAprobado = clase && !coberturaAsignada && isClaseConPermiso(clase, docente.permisosHoy);
+                        const isPed = clase && clase.nombre === "HORA PEDAGOGICA";
 
                         const cellBg = suspensionHoy
                           ? "#fce7f3"
@@ -2042,6 +2064,8 @@ export default function DashboardRector() {
                             ? "#dcfce7"
                             : tieneNovedadAprobada
                             ? "#dbeafe"
+                            : isPed
+                            ? "#f3e8ff"
                             : isCoberturas
                             ? "#fee2e2"
                             : isBreak
@@ -2056,6 +2080,8 @@ export default function DashboardRector() {
                             ? "2px solid #16a34a"
                             : tieneNovedadAprobada
                             ? "2px solid #1d4ed8"
+                            : isPed
+                            ? "1px solid #c084fc"
                             : isCoberturas
                             ? "2px solid #ef4444"
                             : `1px solid ${isBreak ? "#fbbf24" : "#38bdf8"}`);
@@ -2068,6 +2094,8 @@ export default function DashboardRector() {
                             ? "#166534"
                             : tieneNovedadAprobada
                             ? "#1e40af"
+                            : isPed
+                            ? "#6b21a8"
                             : isCoberturas
                             ? "#991b1b"
                             : isBreak
@@ -2093,7 +2121,7 @@ export default function DashboardRector() {
                                 }}
                                 title={coberturaAsignada ? `Cubierto por ${coberturaAsignada.docente_cobertura.nombre} ${coberturaAsignada.docente_cobertura.apellido}` : `${clase.nombre} (Bloque: ${clase.bloque})`}
                               >
-                                {clase.nombre}
+                                {clase.nombre === "HORA PEDAGOGICA" ? "Hora Pedagógica" : clase.nombre}
                                 <div style={{ fontSize: 9, opacity: 0.8, fontWeight: 600 }}>{clase.bloque}</div>
                                 {isCoberturas && !suspensionHoy && !tieneNovedadAprobada && !tienePermisoAprobado && (
                                   <div 
@@ -2491,7 +2519,7 @@ export default function DashboardRector() {
                         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                           {desc.clases_afectadas.map((c, idx) => (
                             <div key={idx} style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <span style={{ fontSize: 12.5, fontWeight: 700, color: "#1e40af" }}>{c.nombre}</span>
+                              <span style={{ fontSize: 12.5, fontWeight: 700, color: "#1e40af" }}>{c.nombre === "HORA PEDAGOGICA" ? "Hora Pedagógica" : c.nombre}</span>
                               <span style={{ fontSize: 11.5, color: "#64748b" }}>Bloque: {c.bloque} ({c.hora_inicio} - {c.hora_fin})</span>
                             </div>
                           ))}
@@ -2636,7 +2664,7 @@ export default function DashboardRector() {
                         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                           {desc.clases_afectadas.map((c, idx) => (
                             <div key={idx} style={{ background: "#eff6ff", border: "1px solid #bfdbfe", borderRadius: 8, padding: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                              <span style={{ fontSize: 12.5, fontWeight: 700, color: "#1e40af" }}>{c.nombre}</span>
+                              <span style={{ fontSize: 12.5, fontWeight: 700, color: "#1e40af" }}>{c.nombre === "HORA PEDAGOGICA" ? "Hora Pedagógica" : c.nombre}</span>
                               <span style={{ fontSize: 11.5, color: "#64748b" }}>Bloque: {c.bloque} ({c.hora_inicio} - {c.hora_fin})</span>
                             </div>
                           ))}

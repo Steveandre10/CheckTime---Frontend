@@ -186,15 +186,16 @@ function TeacherCard({ docente, categoria }) {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
           {docente.clases.map((c, i) => {
             const activa = isClaseActual(c.hora_inicio, c.hora_fin);
+            const isPed = c.nombre === "HORA PEDAGOGICA";
             return (
               <span key={i} style={{
                 fontSize: 10, fontWeight: 700,
-                background: activa ? "#dbeafe" : catStyle.accent,
-                color: activa ? "#1d4ed8" : "var(--text-main)",
-                border: activa ? "1.5px solid #93c5fd" : "1px solid var(--card-border)",
+                background: activa ? (isPed ? "#f3e8ff" : "#dbeafe") : (isPed ? "#f3e8ff" : catStyle.accent),
+                color: activa ? (isPed ? "#6b21a8" : "#1d4ed8") : (isPed ? "#6b21a8" : "var(--text-main)"),
+                border: activa ? (isPed ? "1.5px solid #c084fc" : "1.5px solid #93c5fd") : (isPed ? "1.5px solid #c084fc" : "1px solid var(--card-border)"),
                 padding: "2px 7px", borderRadius: 4,
               }}>
-                {c.hora_inicio}–{c.hora_fin} · {c.nombre} ({c.bloque})
+                {c.hora_inicio}–{c.hora_fin} · {isPed ? "Hora Pedagógica" : c.nombre} ({c.bloque})
               </span>
             );
           })}
@@ -463,24 +464,25 @@ export default function DashboardCoordinador() {
                         return cobDateStr === todayStr && c.id_horario === clase.id_horario;
                       });
 
-                      const isCob = clase && !coberturaAsignada && (
+                      const isCob = clase && clase.nombre !== "HORA PEDAGOGICA" && !coberturaAsignada && (
                         docente.estado === "NO_PRESENTE" ||
                         (docente.estado === "SALIDA_TEMPRANA" && clase.hora_fin > salStr)
                       );
                       const tieneNovedad = clase && !coberturaAsignada && isClaseConNovedadAprobada(clase, docente.novedadesHoy);
                       const tienePermiso = clase && !coberturaAsignada && isClaseConPermiso(clase, docente.permisosHoy);
+                      const isPed = clase && clase.nombre === "HORA PEDAGOGICA";
 
-                      const bg     = coberturaAsignada ? "#ffedd5" : tienePermiso ? "#dcfce7" : tieneNovedad ? "#dbeafe" : isCob ? "#fee2e2" : isBreak ? "#fef3c7" : clase ? "#e0f2fe" : "transparent";
-                      const border = coberturaAsignada ? "2px solid #f97316" : tienePermiso ? "2px solid #16a34a" : tieneNovedad ? "2px solid #1d4ed8" : isCob ? "2px solid #ef4444" : `1px solid ${isBreak?"#fbbf24":clase?"#38bdf8":"#f1f5f9"}`;
-                      const color  = coberturaAsignada ? "#ea580c" : tienePermiso ? "#166534" : tieneNovedad ? "#1e40af" : isCob ? "#991b1b" : isBreak ? "#92400e" : "#0369a1";
-                      const isClickable = !coberturaAsignada && (isCob || tieneNovedad || tienePermiso);
+                      const bg     = coberturaAsignada ? "#ffedd5" : tienePermiso ? "#dcfce7" : tieneNovedad ? "#dbeafe" : isPed ? "#f3e8ff" : isCob ? "#fee2e2" : isBreak ? "#fef3c7" : clase ? "#e0f2fe" : "transparent";
+                      const border = coberturaAsignada ? "2px solid #f97316" : tienePermiso ? "2px solid #16a34a" : tieneNovedad ? "2px solid #1d4ed8" : isPed ? "1px solid #c084fc" : isCob ? "2px solid #ef4444" : `1px solid ${isBreak?"#fbbf24":clase?"#38bdf8":"#f1f5f9"}`;
+                      const color  = coberturaAsignada ? "#ea580c" : tienePermiso ? "#166534" : tieneNovedad ? "#1e40af" : isPed ? "#6b21a8" : isCob ? "#991b1b" : isBreak ? "#92400e" : "#0369a1";
+                      const isClickable = !coberturaAsignada && !isPed && (isCob || tieneNovedad || tienePermiso);
 
                       // Animación: pulseOrange si tiene cobertura asignada (titila en naranja), pulseRed si falta cobertura (titila en rojo)
-                      const animation = (isCob && !tieneNovedad && !tienePermiso)
+                      const animation = (isCob && !tieneNovedad && !tienePermiso && !isPed)
                         ? "pulseRed 1.8s infinite ease-in-out"
                         : (coberturaAsignada ? "pulseOrange 1.8s infinite ease-in-out" : "none");
 
-                      const boxShadow = (isCob && !tieneNovedad && !tienePermiso)
+                      const boxShadow = (isCob && !tieneNovedad && !tienePermiso && !isPed)
                         ? "0 0 14px rgba(239, 68, 68, 0.55)"
                         : (coberturaAsignada ? "0 0 14px rgba(249, 115, 22, 0.55)" : "none");
 
@@ -501,7 +503,7 @@ export default function DashboardCoordinador() {
                               onMouseEnter={(e) => { if(isClickable) e.currentTarget.style.transform = "scale(1.06)"; }}
                               onMouseLeave={(e) => { if(isClickable) e.currentTarget.style.transform = "scale(1)"; }}
                             >
-                              {clase.nombre}
+                              {clase.nombre === "HORA PEDAGOGICA" ? "Hora Pedagógica" : clase.nombre}
                               <div style={{ fontSize:9,opacity:0.8,fontWeight:600 }}>{clase.bloque}</div>
                               {isCob && !tieneNovedad && !tienePermiso && <div style={{ fontSize:8,background:"#dc2626",color:"#fff",borderRadius:3,padding:"1px 4px",marginTop:2,fontWeight:700 }}>SIN COBERTURA</div>}
                               {tieneNovedad && !tienePermiso && <div style={{ fontSize:8,background:"#1d4ed8",color:"#fff",borderRadius:3,padding:"1px 4px",marginTop:2,fontWeight:700 }}>NOVEDAD</div>}

@@ -208,10 +208,10 @@ function HorarioSemanaCalendario({ horarios, suspensiones, coberturas }) {
                 <div key={c.id_horario} style={{
                   background: suspension 
                     ? "#fdf2f8" 
-                    : (c.isCobertura ? "#382312" : (esHoy ? "var(--card-subbg)" : "var(--bg-main)")),
+                    : (c.isCobertura ? "#382312" : (c.nombre === "HORA PEDAGOGICA" ? "#f3e8ff" : (esHoy ? "var(--card-subbg)" : "var(--bg-main)"))),
                   border: `${c.isCobertura && !suspension ? "2px" : "1px"} solid ${suspension 
                     ? "#fbcfe8" 
-                    : (c.isCobertura ? "#f97316" : (esHoy ? "#c7d7f9" : "var(--card-border)"))}`,
+                    : (c.isCobertura ? "#f97316" : (c.nombre === "HORA PEDAGOGICA" ? "#c084fc" : (esHoy ? "#c7d7f9" : "var(--card-border)")))}`,
                   borderRadius: 7, padding: "7px 9px",
                   animation: (c.isCobertura && !suspension) ? "pulseOrange 1.8s infinite ease-in-out" : "none",
                   boxShadow: (c.isCobertura && !suspension) ? "0 0 12px rgba(249, 115, 22, 0.45)" : "none",
@@ -219,9 +219,9 @@ function HorarioSemanaCalendario({ horarios, suspensiones, coberturas }) {
                   <div style={{ 
                     fontSize: 12, 
                     fontWeight: 700, 
-                    color: suspension ? "#9d174d" : (c.isCobertura ? "#f97316" : "var(--text-title)"), 
+                    color: suspension ? "#9d174d" : (c.isCobertura ? "#f97316" : (c.nombre === "HORA PEDAGOGICA" ? "#6b21a8" : "var(--text-title)")), 
                     lineHeight: 1.3 
-                  }}>{c.nombre}</div>
+                  }}>{c.nombre === "HORA PEDAGOGICA" ? "Hora Pedagógica" : c.nombre}</div>
                   <div style={{ 
                     fontSize: 11, 
                     color: suspension ? "#c2185b" : (c.isCobertura ? "#ea580c" : "var(--text-muted)"), 
@@ -1025,7 +1025,7 @@ export default function DashboardProfesor() {
                             )}
                             {desc.clases_afectadas && desc.clases_afectadas.length > 0 && (
                               <span style={{ fontSize: 10, background: "#eff6ff", color: "#1d4ed8", padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
-                                Clases: {desc.clases_afectadas.map(c => c.nombre).join(", ")}
+                                Clases: {desc.clases_afectadas.map(c => c.nombre === "HORA PEDAGOGICA" ? "Hora Pedagógica" : c.nombre).join(", ")}
                               </span>
                             )}
                             {nov.archivo && (
@@ -1141,7 +1141,7 @@ export default function DashboardProfesor() {
                             {desc.descripcion_breve}
                             {desc.clases_afectadas && desc.clases_afectadas.length > 0 && (
                               <div style={{ fontSize: 10, color: "#2563eb", marginTop: 2 }}>
-                                Clases afectadas: {desc.clases_afectadas.map(c => c.nombre).join(", ")}
+                                Clases afectadas: {desc.clases_afectadas.map(c => c.nombre === "HORA PEDAGOGICA" ? "Hora Pedagógica" : c.nombre).join(", ")}
                               </div>
                             )}
                           </td>
@@ -1572,7 +1572,7 @@ export default function DashboardProfesor() {
                                 setClasesAfectadas(prev => [...prev, c.id_horario]);
                               }
                             }} />
-                            <span style={{ fontSize: 12.5, color: "#0f172a" }}>{c.nombre} ({c.hora_inicio} - {c.hora_fin})</span>
+                            <span style={{ fontSize: 12.5, color: "#0f172a" }}>{c.nombre === "HORA PEDAGOGICA" ? "Hora Pedagógica" : c.nombre} ({c.hora_inicio} - {c.hora_fin})</span>
                           </label>
                         );
                       })}
@@ -1719,7 +1719,7 @@ export default function DashboardProfesor() {
                                     setClasesAfectadasPermiso(prev => [...prev, c.id_horario]);
                                   }
                                 }} />
-                                <span style={{ fontSize: 12.5, color: "#0f172a" }}>{c.nombre} ({c.hora_inicio} - {c.hora_fin})</span>
+                                <span style={{ fontSize: 12.5, color: "#0f172a" }}>{c.nombre === "HORA PEDAGOGICA" ? "Hora Pedagógica" : c.nombre} ({c.hora_inicio} - {c.hora_fin})</span>
                               </label>
                             );
                           })}
