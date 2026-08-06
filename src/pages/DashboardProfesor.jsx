@@ -1175,6 +1175,113 @@ export default function DashboardProfesor() {
       );
     }
 
+    if (activeNav === "novedades") {
+      return (
+        <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 14, padding: "20px 24px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "var(--text-title)", fontFamily: "Hanken Grotesk, sans-serif" }}>
+                Historial de Novedades (Hoy)
+              </h2>
+              <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--text-muted)" }}>Consulte y realice el seguimiento de las novedades reportadas para el día de hoy.</p>
+            </div>
+            <button
+              onClick={() => { setNovedadOPermiso("NOVEDAD"); setShowModalNovedad(true); }}
+              style={{
+                padding: "10px 16px", background: "#1F294D", color: "#fff", border: "none", borderRadius: 8,
+                fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.15s",
+                fontFamily: "Hanken Grotesk, sans-serif"
+              }}
+            >
+              + Reportar Novedad
+            </button>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {novedades.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "32px 0", color: "#94a3b8", fontSize: 14 }}>
+                No tienes novedades registradas.
+              </div>
+            ) : (
+              <div style={{ overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: 10 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 650 }}>
+                  <thead>
+                    <tr style={{ background: "#f8fafc" }}>
+                      <th style={{ padding: "10px 14px", textAlign: "left", color: "#64748b", fontWeight: 700 }}>Tipo Novedad</th>
+                      <th style={{ padding: "10px 14px", textAlign: "center", color: "#64748b", fontWeight: 700 }}>Fecha</th>
+                      <th style={{ padding: "10px 14px", textAlign: "left", color: "#64748b", fontWeight: 700 }}>Causa</th>
+                      <th style={{ padding: "10px 14px", textAlign: "left", color: "#64748b", fontWeight: 700 }}>Descripción / Clases</th>
+                      <th style={{ padding: "10px 14px", textAlign: "center", color: "#64748b", fontWeight: 700 }}>Soporte</th>
+                      <th style={{ padding: "10px 14px", textAlign: "center", color: "#64748b", fontWeight: 700 }}>Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {novedades.map((n) => {
+                      let desc = {};
+                      try {
+                        desc = typeof n.descripcion === "string" ? JSON.parse(n.descripcion) : n.descripcion;
+                      } catch (e) {
+                        desc = { descripcion_breve: n.descripcion, causa: n.causa || "Otro" };
+                      }
+
+                      const fechaNov = new Date(n.fecha).toLocaleDateString("es-CO");
+
+                      const statusConf = {
+                        PENDIENTE: { bg: "#fef3c7", color: "#d97706", label: "Pendiente" },
+                        APROBADO: { bg: "#dcfce7", color: "#15803d", label: "Aceptado" },
+                        RECHAZADO: { bg: "#fee2e2", color: "#b91c1c", label: "Rechazado" }
+                      };
+                      const s = statusConf[n.estado] || { bg: "#f1f5f9", color: "#475569", label: n.estado };
+
+                      return (
+                        <tr key={n.id_novedad} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                          <td style={{ padding: "12px 14px", fontWeight: 700, color: "#0f172a" }}>
+                            {n.tipo_novedad?.nombre || "Novedad"}
+                          </td>
+                          <td style={{ padding: "12px 14px", textAlign: "center", color: "#334155" }}>{fechaNov}</td>
+                          <td style={{ padding: "12px 14px", color: "#475569" }}>
+                            <span style={{ fontSize: 11, background: "var(--card-subbg)", color: "var(--text-main)", padding: "2px 8px", borderRadius: 4, fontWeight: 600 }}>
+                              {desc.causa || n.causa || "Otro"}
+                            </span>
+                          </td>
+                          <td style={{ padding: "12px 14px", color: "#475569", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            <span title={desc.descripcion_breve}>{desc.descripcion_breve}</span>
+                            {desc.clases_afectadas && desc.clases_afectadas.length > 0 && (
+                              <div style={{ fontSize: 10, color: "#2563eb", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={desc.clases_afectadas.map(c => c.nombre === "HORA PEDAGOGICA" ? "Hora Pedagógica" : c.nombre).join(", ")}>
+                                Clases: {desc.clases_afectadas.map(c => c.nombre === "HORA PEDAGOGICA" ? "Hora Pedagógica" : c.nombre).join(", ")}
+                              </div>
+                            )}
+                          </td>
+                          <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                            {n.archivo ? (
+                              <a href={getUploadUrl(n.archivo)} target="_blank" rel="noopener noreferrer" style={{ color: "#2563eb", fontWeight: 600, textDecoration: "underline" }}>
+                                Ver soporte 📄
+                              </a>
+                            ) : (
+                              <span style={{ color: "#94a3b8", fontStyle: "italic" }}>Ninguno</span>
+                            )}
+                          </td>
+                          <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                            <span style={{
+                              background: s.bg, color: s.color,
+                              padding: "4px 10px", borderRadius: 20,
+                              fontWeight: 700, fontSize: 11
+                            }}>
+                              {s.label}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
     if (activeNav === "coberturas") {
       return (
         <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 14, padding: "20px 24px" }}>
