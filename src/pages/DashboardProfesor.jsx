@@ -292,6 +292,12 @@ export default function DashboardProfesor() {
   const [suspensiones, setSuspensiones] = useState([]);
   const [suspensionHoy, setSuspensionHoy] = useState(null);
   
+  // Estados para asistencia mensual (Calendario y Reporte)
+  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
+  const [asistenciasMes, setAsistenciasMes] = useState([]);
+  const [loadingAsistencias, setLoadingAsistencias] = useState(false);
+  const [hoveredDay, setHoveredDay] = useState(null);
+  
   // Detección de celular para responsividad
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -324,6 +330,13 @@ export default function DashboardProfesor() {
       obtenerHorasNoAsistidas(id, parsed.fecha_creacion);
     } catch { navigate("/login"); }
   }, [navigate]);
+
+  useEffect(() => {
+    const id = usuario?.id_usuario || usuario?.id;
+    if (id && selectedMonth) {
+      obtenerAsistenciasMes(id, selectedMonth);
+    }
+  }, [usuario, selectedMonth]);
 
 
   const obtenerEstado = async (id_usuario) => {
@@ -435,6 +448,59 @@ export default function DashboardProfesor() {
     }
   };
 
+  const obtenerAsistenciasMes = async (id_usuario, mesStr) => {
+    try {
+      setLoadingAsistencias(true);
+      const res = await axios.get("/asistencia/reporte", {
+        params: {
+          id_usuario,
+          mes: mesStr
+        }
+      });
+      setAsistenciasMes(res.data || []);
+    } catch (e) {
+      console.error("Error al obtener asistencia mensual:", e);
+    } finally {
+      setLoadingAsistencias(false);
+    }
+  };
+
+  const handlePrevMonth = () => {
+    const [year, month] = selectedMonth.split("-").map(Number);
+    const prev = new Date(year, month - 2, 1);
+    const y = prev.getFullYear();
+    const m = String(prev.getMonth() + 1).padStart(2, "0");
+    setSelectedMonth(`${y}-${m}`);
+  };
+
+  const handleNextMonth = () => {
+    const [year, month] = selectedMonth.split("-").map(Number);
+    const next = new Date(year, month, 1);
+    const hoy = new Date();
+    if (next > new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1)) return;
+    const y = next.getFullYear();
+    const m = String(next.getMonth() + 1).padStart(2, "0");
+    setSelectedMonth(`${y}-${m}`);
+  };
+
+  const parseLocalDateString = (dateVal) => {
+    if (!dateVal) return null;
+    const str = typeof dateVal === "string" ? dateVal.split("T")[0] : dateVal;
+    const parts = str.split("-");
+    if (parts.length === 3) {
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    }
+    return new Date(dateVal);
+  };
+
+  const getFechaLabelAsistencia = (dateVal) => {
+    const d = parseLocalDateString(dateVal);
+    if (!d) return "—";
+    const dias = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    return `${dias[d.getDay()]}, ${d.getDate()} de ${meses[d.getMonth()]}`;
+  };
+
   const obtenerTiposPermiso = async () => {
     try {
       const res = await axios.get("/permisos/tipos");
@@ -488,6 +554,7 @@ export default function DashboardProfesor() {
       await obtenerNovedades(id);
       await obtenerNovedadHoy(id);
       await obtenerEstado(id);
+      await obtenerAsistenciasMes(id, selectedMonth);
     } catch (err) {
       console.error(err);
       triggerNotification(err.response?.data?.message || "Error al registrar novedad.");
@@ -554,6 +621,7 @@ export default function DashboardProfesor() {
 
       await obtenerPermisos(id);
       await obtenerEstado(id);
+      await obtenerAsistenciasMes(id, selectedMonth);
     } catch (err) {
       console.error(err);
       triggerNotification(err.response?.data?.message || "Error al solicitar el permiso.");
@@ -570,6 +638,7 @@ export default function DashboardProfesor() {
       await axios.post("/asistencia/entrada", { id_usuario: id });
       await obtenerEstado(id);
       await obtenerHorasNoAsistidas(id, usuario?.fecha_creacion);
+      await obtenerAsistenciasMes(id, selectedMonth);
       triggerNotification("Entrada registrada correctamente.", "success");
     } catch (e) {
       triggerNotification(e.response?.data?.message || "Error al registrar entrada.", "error");
@@ -673,6 +742,7 @@ export default function DashboardProfesor() {
       await axios.post("/asistencia/salida", { id_usuario: id });
       await obtenerEstado(id);
       await obtenerHorasNoAsistidas(id, usuario?.fecha_creacion);
+      await obtenerAsistenciasMes(id, selectedMonth);
       triggerNotification("Salida registrada correctamente.", "success");
     } catch (e) {
       triggerNotification(e.response?.data?.message || "Error al registrar salida.", "error");
@@ -1273,6 +1343,329 @@ export default function DashboardProfesor() {
                         </tr>
                       );
                     })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    if (activeNav === "asistencia") {
+      const [year, month] = selectedMonth.split("-").map(Number);
+      const mesesNombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+      const diasSemanaNombres = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+      const firstDay = new Date(year, month - 1, 1);
+      const firstDayOfWeek = firstDay.getDay();
+      const daysInMonth = new Date(year, month, 0).getDate();
+
+      const calendarCells = [
+        ...Array(firstDayOfWeek).fill(null),
+        ...Array.from({ length: daysInMonth }, (_, i) => i + 1)
+      ];
+
+      const getAsistenciaCellConfig = (dayNum) => {
+        if (!dayNum) {
+          return {
+            bg: "transparent",
+            color: "transparent",
+            border: "1.5px solid transparent",
+            label: "",
+            tooltip: "",
+            isEmpty: true
+          };
+        }
+
+        const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(dayNum).padStart(2, "0")}`;
+        const item = asistenciasMes.find(a => a.fecha.split("T")[0] === dateStr);
+
+        const hoy = new Date();
+        hoy.setHours(0,0,0,0);
+        const cellDate = new Date(year, month - 1, dayNum);
+
+        if (cellDate > hoy) {
+          return {
+            bg: "transparent",
+            color: "var(--text-muted)",
+            border: "1px solid var(--card-border)",
+            opacity: 0.35,
+            label: `${dayNum}`,
+            tooltip: `Día ${dayNum} - Futuro`
+          };
+        }
+
+        if (!item) {
+          return {
+            bg: "var(--card-subbg)",
+            color: "var(--text-muted)",
+            border: "1px solid var(--card-border)",
+            label: `${dayNum}`,
+            tooltip: `Día ${dayNum} - Sin registro`
+          };
+        }
+
+        if (item.isSuspension || item.estado === "PARO" || item.estado === "VACACIONES") {
+          return {
+            bg: "#fce7f3",
+            color: "#9d174d",
+            border: "1.5px solid #fbcfe8",
+            label: `${dayNum}`,
+            tooltip: `Día ${dayNum} (${item.estado === "PARO" ? "Paro" : "Vacaciones"}): ${item.observacion || "Día de suspensión de clases"}`
+          };
+        }
+
+        switch (item.estado) {
+          case "PRESENTE":
+          case "FINALIZADO":
+            return {
+              bg: "#dcfce7",
+              color: "#166534",
+              border: "1.5px solid #86efac",
+              label: `${dayNum}`,
+              tooltip: `Día ${dayNum} - Asistido. Entrada: ${item.hora_entrada || "—"} | Salida: ${item.hora_salida || "—"}`
+            };
+          case "TARDANZA":
+          case "SALIDA_TEMPRANA":
+            return {
+              bg: "#ffedd5",
+              color: "#c2410c",
+              border: "1.5px solid #fed7aa",
+              label: `${dayNum}`,
+              tooltip: `Día ${dayNum} - ${item.estado === "TARDANZA" ? "Entrada tarde" : "Salida temprana"}. Entrada: ${item.hora_entrada || "—"} | Salida: ${item.hora_salida || "—"}`
+            };
+          case "CON_PERMISO":
+            return {
+              bg: "#eff6ff",
+              color: "#1d4ed8",
+              border: "1.5px solid #bfdbfe",
+              label: `${dayNum}`,
+              tooltip: `Día ${dayNum} - Justificado: ${item.observacion || "Ausente con novedad/permiso aprobado"}`
+            };
+          case "NO_PRESENTE":
+            return {
+              bg: "#fee2e2",
+              color: "#991b1b",
+              border: "1.5px solid #fecaca",
+              label: `${dayNum}`,
+              tooltip: `Día ${dayNum} - Inasistencia: ${item.observacion || "No se registró asistencia"}`
+            };
+          case "NO_TIENE_CLASES":
+            return {
+              bg: "var(--card-subbg)",
+              color: "var(--text-muted)",
+              border: "1px solid var(--card-border)",
+              label: `${dayNum}`,
+              tooltip: `Día ${dayNum} - Sin clases programadas en su horario`
+            };
+          case "PENDIENTE":
+            return {
+              bg: "var(--card-bg)",
+              color: "var(--text-main)",
+              border: "1.5px dashed var(--text-muted)",
+              label: `${dayNum}`,
+              tooltip: `Día ${dayNum} - Hoy (Pendiente de registrar asistencia)`
+            };
+          default:
+            return {
+              bg: "var(--card-subbg)",
+              color: "var(--text-main)",
+              border: "1px solid var(--card-border)",
+              label: `${dayNum}`,
+              tooltip: `Día ${dayNum}: ${item.observacion || item.estado}`
+            };
+        }
+      };
+
+      const getTableStatusBadge = (estado) => {
+        const config = {
+          PRESENTE:        { label: "Presente",          bg: "#dcfce7", color: "#166534" },
+          FINALIZADO:      { label: "Salida Registrada", bg: "#dbeafe", color: "#1e40af" },
+          TARDANZA:        { label: "Entrada Tarde",     bg: "#ffedd5", color: "#c2410c" },
+          SALIDA_TEMPRANA: { label: "Salida Temprana",   bg: "#f3e8ff", color: "#6b21a8" },
+          NO_PRESENTE:     { label: "No Presente",        bg: "#fee2e2", color: "#991b1b" },
+          CON_PERMISO:     { label: "Permiso/Novedad",   bg: "#eff6ff", color: "#1d4ed8" },
+          PARO:            { label: "Paro",              bg: "#fce7f3", color: "#9d174d" },
+          VACACIONES:      { label: "Vacaciones",        bg: "#fce7f3", color: "#9d174d" },
+          NO_TIENE_CLASES: { label: "Sin Clases",        bg: "var(--card-subbg)", color: "var(--text-muted)" },
+          PENDIENTE:       { label: "Pendiente",         bg: "var(--card-bg)", color: "var(--text-main)", border: "1.5px dashed var(--text-muted)" }
+        };
+        const c = config[estado] || { label: estado, bg: "#f1f5f9", color: "#475569" };
+        return (
+          <span style={{
+            background: c.bg, color: c.color,
+            border: c.border ? c.border : "none",
+            padding: "4px 12px", borderRadius: 20,
+            fontWeight: 700, fontSize: 11,
+            fontFamily: "Hanken Grotesk, sans-serif",
+            display: "inline-block"
+          }}>{c.label}</span>
+        );
+      };
+
+      return (
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          {/* CALENDARIO DE ASISTENCIA */}
+          <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 14, padding: "24px" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20, flexWrap: "wrap", gap: 12 }}>
+              <div>
+                <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "var(--text-title)", fontFamily: "Hanken Grotesk, sans-serif" }}>
+                  Mi Registro Mensual de Asistencia
+                </h2>
+                <p style={{ margin: "2px 0 0", fontSize: 12, color: "var(--text-muted)" }}>Visualice de forma interactiva el cumplimiento de su asistencia diaria.</p>
+              </div>
+              
+              {/* NAVEGADOR DE MESES */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, background: "var(--card-subbg)", padding: "4px 8px", borderRadius: 10, border: "1px solid var(--card-border)" }}>
+                <button 
+                  onClick={handlePrevMonth}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-title)", fontSize: 16, fontWeight: 700, padding: "4px 8px" }}
+                >
+                  ◀
+                </button>
+                <span style={{ fontSize: 13.5, fontWeight: 700, color: "var(--text-title)", minWidth: 120, textAlign: "center", textTransform: "capitalize" }}>
+                  {mesesNombres[month - 1]} {year}
+                </span>
+                <button 
+                  onClick={handleNextMonth}
+                  style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-title)", fontSize: 16, fontWeight: 700, padding: "4px 8px" }}
+                >
+                  ▶
+                </button>
+              </div>
+            </div>
+
+            {loadingAsistencias ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 260, color: "var(--text-muted)", fontSize: 14 }}>
+                Cargando calendario...
+              </div>
+            ) : (
+              <>
+                {/* GRILLA DEL CALENDARIO */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 8, maxWidth: 640, margin: "0 auto 20px" }}>
+                  {/* Cabeceras de días */}
+                  {diasSemanaNombres.map(d => (
+                    <div key={d} style={{ textAlign: "center", fontWeight: 700, fontSize: 12, color: "var(--text-muted)", padding: "6px 0", textTransform: "uppercase", letterSpacing: "0.02em" }}>
+                      {d}
+                    </div>
+                  ))}
+                  
+                  {/* Celdas de días */}
+                  {calendarCells.map((dayNum, idx) => {
+                    const config = getAsistenciaCellConfig(dayNum);
+                    const isHovered = hoveredDay === idx;
+                    
+                    if (config.isEmpty) {
+                      return <div key={`empty-${idx}`} />;
+                    }
+
+                    return (
+                      <div
+                        key={`day-${dayNum}`}
+                        onMouseEnter={() => setHoveredDay(idx)}
+                        onMouseLeave={() => setHoveredDay(null)}
+                        title={config.tooltip}
+                        style={{
+                          aspectRatio: "1/1",
+                          background: config.bg,
+                          color: config.color,
+                          border: config.border,
+                          opacity: config.opacity || 1,
+                          borderRadius: 8,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontWeight: 700,
+                          fontSize: 14,
+                          cursor: config.isEmpty || config.opacity === 0.35 ? "default" : "pointer",
+                          transform: isHovered && config.opacity !== 0.35 ? "scale(1.08)" : "scale(1)",
+                          boxShadow: isHovered && config.opacity !== 0.35 ? "0 4px 12px rgba(0,0,0,0.1)" : "none",
+                          transition: "all 0.18s ease-in-out",
+                          position: "relative"
+                        }}
+                      >
+                        {config.label}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* LEYENDA DEL CALENDARIO */}
+                <div style={{ borderTop: "1px solid var(--card-border)", paddingTop: 16, display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 16 }}>
+                  {[
+                    { color: "#dcfce7", border: "#86efac", label: "Presente" },
+                    { color: "#ffedd5", border: "#fed7aa", label: "Tarde/Salida Temp." },
+                    { color: "#fce7f3", border: "#fbcfe8", label: "Paro/Vacaciones" },
+                    { color: "#eff6ff", border: "#bfdbfe", label: "Novedad/Permiso" },
+                    { color: "#fee2e2", border: "#fecaca", label: "Falta/Ausencia" },
+                    { color: "var(--card-subbg)", border: "var(--card-border)", label: "Sin Clases" },
+                    { color: "var(--card-bg)", border: "var(--text-muted)", label: "Hoy/Pendiente", dashed: true }
+                  ].map(leg => (
+                    <div key={leg.label} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11.5 }}>
+                      <span style={{
+                        width: 14, height: 14, borderRadius: 4,
+                        background: leg.color,
+                        border: leg.dashed ? `1.5px dashed ${leg.border}` : `1.5px solid ${leg.border}`
+                      }} />
+                      <span style={{ color: "var(--text-main)", fontWeight: 500 }}>{leg.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* HISTORIAL DETALLADO DE ASISTENCIAS */}
+          <div style={{ background: "var(--card-bg)", border: "1px solid var(--card-border)", borderRadius: 14, padding: "20px 24px" }}>
+            <h3 style={{ margin: "0 0 16px", fontSize: 16, fontWeight: 700, color: "var(--text-title)", fontFamily: "Hanken Grotesk, sans-serif" }}>
+              Detalle del Historial
+            </h3>
+
+            {loadingAsistencias ? (
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 160, color: "var(--text-muted)", fontSize: 14 }}>
+                Cargando historial...
+              </div>
+            ) : asistenciasMes.length === 0 ? (
+              <div style={{ textAlign: "center", padding: "32px 0", color: "#94a3b8", fontSize: 14 }}>
+                No tienes registros de asistencia en el periodo seleccionado.
+              </div>
+            ) : (
+              <div style={{ overflowX: "auto", border: "1px solid #e2e8f0", borderRadius: 10 }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13, minWidth: 650 }}>
+                  <thead>
+                    <tr style={{ background: "#f8fafc" }}>
+                      <th style={{ padding: "10px 14px", textAlign: "left", color: "#64748b", fontWeight: 700 }}>Día / Fecha</th>
+                      <th style={{ padding: "10px 14px", textAlign: "center", color: "#64748b", fontWeight: 700 }}>Hora Entrada</th>
+                      <th style={{ padding: "10px 14px", textAlign: "center", color: "#64748b", fontWeight: 700 }}>Hora Salida</th>
+                      <th style={{ padding: "10px 14px", textAlign: "center", color: "#64748b", fontWeight: 700 }}>Estado</th>
+                      <th style={{ padding: "10px 14px", textAlign: "center", color: "#64748b", fontWeight: 700 }}>Horas Perdidas</th>
+                      <th style={{ padding: "10px 14px", textAlign: "left", color: "#64748b", fontWeight: 700 }}>Observaciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {asistenciasMes.map((item) => (
+                      <tr key={item.id_asistencia} style={{ borderBottom: "1px solid #e2e8f0" }}>
+                        <td style={{ padding: "12px 14px", fontWeight: 700, color: "#0f172a" }}>
+                          {getFechaLabelAsistencia(item.fecha)}
+                        </td>
+                        <td style={{ padding: "12px 14px", textAlign: "center", color: "#334155" }}>
+                          {item.hora_entrada ? item.hora_entrada : "—"}
+                        </td>
+                        <td style={{ padding: "12px 14px", textAlign: "center", color: "#334155" }}>
+                          {item.hora_salida ? item.hora_salida : "—"}
+                        </td>
+                        <td style={{ padding: "12px 14px", textAlign: "center" }}>
+                          {getTableStatusBadge(item.estado)}
+                        </td>
+                        <td style={{ padding: "12px 14px", textAlign: "center", color: item.horas_perdidas > 0 ? "#ef4444" : "#334155", fontWeight: item.horas_perdidas > 0 ? 700 : 400 }}>
+                          {item.horas_perdidas ? `${item.horas_perdidas} ${item.horas_perdidas === 1 ? 'hora' : 'horas'}` : "0 horas"}
+                        </td>
+                        <td style={{ padding: "12px 14px", color: "#475569" }}>
+                          {item.observacion || "—"}
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
