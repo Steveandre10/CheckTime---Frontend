@@ -1357,6 +1357,17 @@ export default function DashboardProfesor() {
       const mesesNombres = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
       const diasSemanaNombres = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 
+      const formatNaturalTime = (timeVal) => {
+        if (!timeVal) return "—";
+        try {
+          const date = new Date(timeVal);
+          if (isNaN(date.getTime())) return timeVal;
+          return date.toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit", hour12: true });
+        } catch (e) {
+          return timeVal;
+        }
+      };
+
       const firstDay = new Date(year, month - 1, 1);
       const firstDayOfWeek = firstDay.getDay();
       const daysInMonth = new Date(year, month, 0).getDate();
@@ -1639,7 +1650,6 @@ export default function DashboardProfesor() {
                       <th style={{ padding: "10px 14px", textAlign: "center", color: "#64748b", fontWeight: 700 }}>Hora Entrada</th>
                       <th style={{ padding: "10px 14px", textAlign: "center", color: "#64748b", fontWeight: 700 }}>Hora Salida</th>
                       <th style={{ padding: "10px 14px", textAlign: "center", color: "#64748b", fontWeight: 700 }}>Estado</th>
-                      <th style={{ padding: "10px 14px", textAlign: "center", color: "#64748b", fontWeight: 700 }}>Horas Perdidas</th>
                       <th style={{ padding: "10px 14px", textAlign: "left", color: "#64748b", fontWeight: 700 }}>Observaciones</th>
                     </tr>
                   </thead>
@@ -1650,16 +1660,13 @@ export default function DashboardProfesor() {
                           {getFechaLabelAsistencia(item.fecha)}
                         </td>
                         <td style={{ padding: "12px 14px", textAlign: "center", color: "#334155" }}>
-                          {item.hora_entrada ? item.hora_entrada : "—"}
+                          {formatNaturalTime(item.hora_entrada)}
                         </td>
                         <td style={{ padding: "12px 14px", textAlign: "center", color: "#334155" }}>
-                          {item.hora_salida ? item.hora_salida : "—"}
+                          {formatNaturalTime(item.hora_salida)}
                         </td>
                         <td style={{ padding: "12px 14px", textAlign: "center" }}>
                           {getTableStatusBadge(item.estado)}
-                        </td>
-                        <td style={{ padding: "12px 14px", textAlign: "center", color: item.horas_perdidas > 0 ? "#ef4444" : "#334155", fontWeight: item.horas_perdidas > 0 ? 700 : 400 }}>
-                          {item.horas_perdidas ? `${item.horas_perdidas} ${item.horas_perdidas === 1 ? 'hora' : 'horas'}` : "0 horas"}
                         </td>
                         <td style={{ padding: "12px 14px", color: "#475569" }}>
                           {item.observacion || "—"}
