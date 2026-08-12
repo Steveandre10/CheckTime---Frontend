@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "../services/api";
 import logo from "../assets/logo.jpeg";
 import ThemeToggle from "../components/ThemeToggle";
+import ConfigurationPanel from "../components/ConfigurationPanel";
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -1812,6 +1813,10 @@ export default function DashboardRector() {
           </div>
         </div>
       );
+    }
+
+    if (activeNav === "configuration") {
+      return <ConfigurationPanel usuario={usuario} onUsuarioUpdated={setUsuario} />;
     }
 
     if (activeNav !== "home") {

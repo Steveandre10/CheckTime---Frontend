@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "../services/api";
 import logo from "../assets/logo.jpeg";
 import ThemeToggle from "../components/ThemeToggle";
+import ConfigurationPanel from "../components/ConfigurationPanel";
 
 const getLocalTodayStr = () => {
   const d = new Date();
@@ -27,6 +28,11 @@ const NAV_ITEMS = [
     key: "coberturas",
     label: "Coberturas Creadas",
     icon: "M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z",
+  },
+  {
+    key: "configuration",
+    label: "Configuración",
+    icon: "M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z"
   }
 ];
 
@@ -714,7 +720,7 @@ export default function DashboardCoordinador() {
         <div style={{ display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:28 }}>
           <div>
             <h1 style={{ margin:0,fontSize:isMobile?22:26,fontWeight:700,color:"#091437",fontFamily:"Hanken Grotesk, sans-serif" }}>
-              {activeNav === "home" ? "Gestión Académica" : activeNav === "teachers" ? "Listado de Docentes" : "Coberturas Creadas"}
+              {activeNav === "home" ? "Gestión Académica" : activeNav === "teachers" ? "Listado de Docentes" : activeNav === "configuration" ? "Configuración" : "Coberturas Creadas"}
             </h1>
             <p style={{ margin:"4px 0 0",fontSize:12,color:"#64748b" }}>
               Panel de Coordinación — {new Date().toLocaleDateString("es-CO",{weekday:"long",year:"numeric",month:"long",day:"numeric"})}
@@ -726,7 +732,14 @@ export default function DashboardCoordinador() {
             </button>
           )}
         </div>
-        {activeNav === "home" ? renderHome() : activeNav === "teachers" ? renderListTeachers() : renderCoberturas()}
+        {activeNav === "home" 
+          ? renderHome() 
+          : activeNav === "teachers" 
+            ? renderListTeachers() 
+            : activeNav === "configuration"
+              ? <ConfigurationPanel usuario={usuario} onUsuarioUpdated={setUsuario} />
+              : renderCoberturas()
+        }
         <p style={{ fontSize:12,color:"#94a3b8",textAlign:"center",marginTop:40 }}>
           Coordinador: {usuario?`${usuario.nombre} ${usuario.apellido}`:" "}
         </p>
