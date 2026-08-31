@@ -1,9 +1,16 @@
+/**
+ * @file DashboardRector.jsx
+ * @description Panel de control de Rectoría de CheckTime.
+ * Ofrece la suite completa de administración del sistema escolar: gestión de horarios de docentes, aprobación/rechazo de solicitudes de permisos y novedades, visualización en tiempo real del estado de asistencia diaria, gestión del listado de personal (Staff - activar/desactivar cuentas), consulta de analíticas avanzadas de ausentismo con gráficas y reportes exportables en Excel y PDF, y un panel de control escolar para registrar suspensiones generales (vacaciones, paros).
+ */
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../services/api";
 import logo from "../assets/logo.jpeg";
 import ThemeToggle from "../components/ThemeToggle";
 import ConfigurationPanel from "../components/ConfigurationPanel";
+
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";

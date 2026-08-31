@@ -1,9 +1,16 @@
+/**
+ * @file DashboardProfesor.jsx
+ * @description Panel interactivo para el rol del Docente (Profesor).
+ * Permite visualizar el horario de clases, registrar la asistencia diaria (entrada/salida), gestionar solicitudes de permisos, reportar novedades e incidencias (como ausencias totales o tardanzas) y ver las coberturas (reemplazos) asignadas.
+ */
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../services/api";
 import logo from "../assets/logo.jpeg";
 import ThemeToggle from "../components/ThemeToggle";
 import ConfigurationPanel from "../components/ConfigurationPanel";
+
 
 const DIAS_ORDEN = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"];
 const DIAS_LABEL = { LUNES: "Lun", MARTES: "Mar", MIERCOLES: "Mié", JUEVES: "Jue", VIERNES: "Vie", SABADO: "Sáb", DOMINGO: "Dom" };

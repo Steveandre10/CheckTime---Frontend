@@ -1,6 +1,20 @@
+/**
+ * @file ConfigurationPanel.jsx
+ * @description Panel de configuración de usuario que permite al usuario autenticado actualizar sus datos personales (nombre, apellido, correo, documento, teléfono y contraseña).
+ */
+
 import { useState, useEffect } from "react";
 import axios from "../services/api";
 
+/**
+ * Componente ConfigurationPanel.
+ * Presenta un formulario interactivo para la edición del perfil de usuario y la persistencia de los cambios.
+ * 
+ * @component
+ * @param {Object} props - Propiedades del componente.
+ * @param {Object} props.usuario - Objeto de datos del usuario actual autenticado.
+ * @param {function} props.onUsuarioUpdated - Función Callback que se ejecuta cuando el usuario se actualiza con éxito para refrescar la interfaz del dashboard.
+ */
 export default function ConfigurationPanel({ usuario, onUsuarioUpdated }) {
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");

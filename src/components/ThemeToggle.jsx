@@ -1,7 +1,21 @@
+/**
+ * @file ThemeToggle.jsx
+ * @description Botón interactivo para cambiar entre tema claro y oscuro consumiendo la funcionalidad de useTheme.
+ */
+
 import React from "react";
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 
+/**
+ * Componente ThemeToggle.
+ * Muestra un icono de sol para el modo oscuro (al hacer clic cambia a claro) y un icono de luna para el modo claro (al hacer clic cambia a oscuro).
+ * 
+ * @component
+ * @param {Object} props - Propiedades del componente.
+ * @param {string} [props.className=""] - Clases de CSS o Tailwind opcionales para personalizar estilos.
+ * @param {boolean} [props.compact=false] - Si es verdadero, oculta el texto descriptivo y solo muestra el icono.
+ */
 export default function ThemeToggle({ className = "", compact = false }) {
   const { isDark, toggleTheme } = useTheme();
 
@@ -32,3 +46,4 @@ export default function ThemeToggle({ className = "", compact = false }) {
     </button>
   );
 }
+

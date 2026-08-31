@@ -1,9 +1,16 @@
+/**
+ * @file DashboardCoordinador.jsx
+ * @description Panel de control para el rol de Coordinador.
+ * Permite a los coordinadores visualizar los horarios globales diarios de todos los docentes en tiempo real, ver la asistencia y el estado de presentismo actual, gestionar la asignación de coberturas (reemplazos) para bloques de clase libres y generar reportes analíticos de asistencia en formato Excel y PDF.
+ */
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../services/api";
 import logo from "../assets/logo.jpeg";
 import ThemeToggle from "../components/ThemeToggle";
 import ConfigurationPanel from "../components/ConfigurationPanel";
+
 
 const getLocalTodayStr = () => {
   const d = new Date();

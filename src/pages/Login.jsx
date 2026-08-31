@@ -1,9 +1,19 @@
+/**
+ * @file Login.jsx
+ * @description Pantalla de inicio de sesión de CheckTime.
+ * Permite a los usuarios autenticarse con correo y contraseña, valida credenciales contra la API, almacena el token JWT y los datos de perfil del usuario en el localStorage y los redirige al dashboard adecuado según su rol (Profesor, Coordinador o Rector).
+ */
+
 import React, { useState, useEffect } from "react";
 import { loginUser } from "../services/authService";
 import { useNavigate, useLocation } from "react-router-dom";
 import logo from '../assets/logo.jpeg';
 import ThemeToggle from '../components/ThemeToggle';
 
+/**
+ * Componente de página de Login.
+ * @component
+ */
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();

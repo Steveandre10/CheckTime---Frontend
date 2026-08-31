@@ -1,8 +1,18 @@
+/**
+ * @file Welcome.jsx
+ * @description Página de bienvenida y presentación de la aplicación CheckTime.
+ * Permite a los usuarios acceder al formulario de login e incluye accesos directos e indicadores visuales.
+ */
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.jpeg';
 import ThemeToggle from '../components/ThemeToggle';
 
+/**
+ * Componente de página Welcome.
+ * @component
+ */
 export default function Welcome() {
   const navigate = useNavigate();
 

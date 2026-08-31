@@ -1,9 +1,19 @@
+/**
+ * @file Register.jsx
+ * @description Pantalla de registro de usuarios en CheckTime.
+ * Ofrece un formulario interactivo para registrar un nuevo usuario con validaciones de contraseña, correo institucional y documento.
+ */
+
 import React, { useState } from "react";
 import { registerUser } from "../services/authService";
 import { useNavigate } from "react-router-dom";
 import logo from '../assets/logo.jpeg';
 import ThemeToggle from '../components/ThemeToggle';
 
+/**
+ * Componente de página de Registro.
+ * @component
+ */
 export default function Register() {
   const navigate = useNavigate();
 
