@@ -9,12 +9,14 @@ import { loginUser } from "../services/authService";
 import { useNavigate, useLocation } from "react-router-dom";
 import logo from '../assets/logo.jpeg';
 import ThemeToggle from '../components/ThemeToggle';
+import usePageTitle from '../hooks/usePageTitle';
 
 /**
  * Componente de página de Login.
  * @component
  */
 export default function Login() {
+  usePageTitle("Login");
   const navigate = useNavigate();
   const location = useLocation();
 

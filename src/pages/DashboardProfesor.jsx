@@ -10,6 +10,7 @@ import axios from "../services/api";
 import logo from "../assets/logo.jpeg";
 import ThemeToggle from "../components/ThemeToggle";
 import ConfigurationPanel from "../components/ConfigurationPanel";
+import usePageTitle from "../hooks/usePageTitle";
 
 
 const DIAS_ORDEN = ["LUNES", "MARTES", "MIERCOLES", "JUEVES", "VIERNES", "SABADO", "DOMINGO"];
@@ -263,6 +264,8 @@ export default function DashboardProfesor() {
 
   const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState("home");
+  const navLabel = NAV_ITEMS.find((n) => n.key === activeNav)?.label || "Docente";
+  usePageTitle(navLabel);
   const [estado, setEstado] = useState("NO_PRESENTE");
   const [loading, setLoading] = useState(false);
   const [usuario, setUsuario] = useState(null);

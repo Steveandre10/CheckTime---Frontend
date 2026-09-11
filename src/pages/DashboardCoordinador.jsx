@@ -10,6 +10,7 @@ import axios from "../services/api";
 import logo from "../assets/logo.jpeg";
 import ThemeToggle from "../components/ThemeToggle";
 import ConfigurationPanel from "../components/ConfigurationPanel";
+import usePageTitle from "../hooks/usePageTitle";
 
 
 const getLocalTodayStr = () => {
@@ -273,6 +274,14 @@ function TeacherGroup({ title, subtitle, color, icon, docentes, categoria, defau
 export default function DashboardCoordinador() {
   const navigate = useNavigate();
   const [activeNav, setActiveNav]     = useState("home");
+
+  const navLabels = {
+    home: "Home",
+    teachers: "Lista de Docentes",
+    coberturas: "Coberturas",
+    configuration: "Configuración",
+  };
+  usePageTitle(navLabels[activeNav] || "Coordinador");
   const [usuario, setUsuario]         = useState(null);
   const [horariosGlobales, setHorariosGlobales] = useState([]);
   const [loading, setLoading]         = useState(false);

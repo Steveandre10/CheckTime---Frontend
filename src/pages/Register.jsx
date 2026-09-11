@@ -9,12 +9,14 @@ import { registerUser } from "../services/authService";
 import { useNavigate } from "react-router-dom";
 import logo from '../assets/logo.jpeg';
 import ThemeToggle from '../components/ThemeToggle';
+import usePageTitle from '../hooks/usePageTitle';
 
 /**
  * Componente de página de Registro.
  * @component
  */
 export default function Register() {
+  usePageTitle("Registro");
   const navigate = useNavigate();
 
   const [form, setForm] = useState({

@@ -8,6 +8,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import logo from '../assets/logo.jpeg';
 import ThemeToggle from '../components/ThemeToggle';
+import usePageTitle from '../hooks/usePageTitle';
 
 /**
  * Componente de página Welcome.
@@ -15,6 +16,7 @@ import ThemeToggle from '../components/ThemeToggle';
  */
 export default function Welcome() {
   const navigate = useNavigate();
+  usePageTitle('Bienvenido');
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-gradient-to-tr from-indigo-50 via-slate-50 to-blue-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950 text-slate-800 dark:text-slate-100 font-sans transition-colors duration-300 relative">

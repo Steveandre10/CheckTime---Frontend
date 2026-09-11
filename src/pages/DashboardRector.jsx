@@ -10,6 +10,7 @@ import axios from "../services/api";
 import logo from "../assets/logo.jpeg";
 import ThemeToggle from "../components/ThemeToggle";
 import ConfigurationPanel from "../components/ConfigurationPanel";
+import usePageTitle from "../hooks/usePageTitle";
 
 import * as XLSX from "xlsx";
 import { jsPDF } from "jspdf";
@@ -589,6 +590,17 @@ const isClaseActual = (horaInicio, horaFin) => {
 export default function DashboardRector() {
   const navigate = useNavigate();
   const [activeNav, setActiveNav] = useState("home");
+
+  const navLabels = {
+    home: "Home",
+    schedules: "Horarios",
+    requests: "Permisos y Novedades",
+    attendance: "Asistencia",
+    staff: "Personal",
+    analytics: "Analíticas",
+    configuration: "Configuración",
+  };
+  usePageTitle(navLabels[activeNav] || "Rector");
   const [showModal, setShowModal] = useState(false);
   const [profesores, setProfesores] = useState([]);
   const [usuario, setUsuario] = useState(null);
